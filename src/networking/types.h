@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 enum { DISCOVERY_HOSTNAME_SIZE = 64 };
-enum { NODE_ID_SIZE = 33};
+enum { NODE_ID_SIZE = 32 };
 struct discovery_payload {
     int32_t uid;
     int32_t port;

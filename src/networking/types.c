@@ -33,7 +33,6 @@ struct discovery_payload discovery_payload_deserialize(const char* buf) {
     memcpy(&net_port, buf + sizeof(int32_t), sizeof(int32_t));
     memcpy(payload.node_id, buf + sizeof(int32_t) * 2, NODE_ID_SIZE);
     memcpy(payload.hostname, buf + sizeof(int32_t) * 2 + NODE_ID_SIZE, DISCOVERY_HOSTNAME_SIZE);
-    payload.node_id[NODE_ID_SIZE - 1] = '\0';
     payload.hostname[DISCOVERY_HOSTNAME_SIZE - 1] = '\0';
 
     payload.uid = ntohl(net_uid);

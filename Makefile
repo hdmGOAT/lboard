@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -O2
 
 OUT = out
 BIN = $(OUT)/lboard
-SRC = src/main.c src/networking/discovery.c src/networking/types.c
+SRC = src/main.c src/networking/discovery.c src/networking/types.c src/store/node.c
 
 build: $(OUT) $(BIN)
 
