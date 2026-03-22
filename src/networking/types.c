@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,7 +17,8 @@ char* discovery_payload_serialize(const struct discovery_payload* payload) {
 
     memcpy(buf, &net_uid, sizeof(int32_t));
     memcpy(buf + sizeof(int32_t), &net_port, sizeof(int32_t));
-    memcpy(buf + sizeof(int32_t) * 2, payload->hostname, DISCOVERY_HOSTNAME_SIZE);
+	memcpy(buf + sizeof(int32_t) * 2, payload->node_id, NODE_ID_SIZE);
+    memcpy(buf + sizeof(int32_t) * 2 + NODE_ID_SIZE, payload->hostname, DISCOVERY_HOSTNAME_SIZE);
 
     return buf;
 }
@@ -29,7 +31,9 @@ struct discovery_payload discovery_payload_deserialize(const char* buf) {
 
     memcpy(&net_uid, buf, sizeof(int32_t));
     memcpy(&net_port, buf + sizeof(int32_t), sizeof(int32_t));
-    memcpy(payload.hostname, buf + sizeof(int32_t) * 2, DISCOVERY_HOSTNAME_SIZE);
+    memcpy(payload.node_id, buf + sizeof(int32_t) * 2, NODE_ID_SIZE);
+    memcpy(payload.hostname, buf + sizeof(int32_t) * 2 + NODE_ID_SIZE, DISCOVERY_HOSTNAME_SIZE);
+    payload.node_id[NODE_ID_SIZE - 1] = '\0';
     payload.hostname[DISCOVERY_HOSTNAME_SIZE - 1] = '\0';
 
     payload.uid = ntohl(net_uid);
