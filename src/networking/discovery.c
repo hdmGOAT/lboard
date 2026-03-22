@@ -20,7 +20,7 @@ int discovery(int port, int poll_ms) {
     struct sockaddr_in src;
     socklen_t srclen = sizeof(src);
 
-	if (listener != 0){
+	if (listener < 0){
 		perror("listener");
 		return 1;
 	}
@@ -86,6 +86,7 @@ int get_listener_socket(int port) {
 		return -1;
 	}
 
+	
 	for (p = ai; p != NULL; p = p->ai_next) {
 		listener = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
