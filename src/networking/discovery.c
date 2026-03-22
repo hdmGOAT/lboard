@@ -20,9 +20,15 @@ int uid(){
 
 int discovery(int port, int poll_ms, int uid) {
 	int listener = get_listener_socket(port);
-	char discov_msg[256];
-	snprintf(discov_msg, sizeof(discov_msg), "FIND_ME:%d", uid);
-    char buf[1024];
+	struct discovery_payload payload = {
+		.uid = uid,
+		.port = port,
+	};
+	memset(payload.hostname, 0, sizeof(payload.hostname));
+	if (gethostname(payload.hostname, sizeof(payload.hostname)) != 0) {
+		snprintf(payload.hostname, sizeof(payload.hostname), "unknown");
+	}
+    char buf[DISCOVERY_PAYLOAD_SIZE];
     struct sockaddr_in src;
     socklen_t srclen = sizeof(src);
 
@@ -44,7 +50,7 @@ int discovery(int port, int poll_ms, int uid) {
 		}
 
 		if (ret == 0) {
-			broadcast(port, discov_msg);	
+			broadcast(port, &payload);	
 			continue;
 		}
 
@@ -52,27 +58,25 @@ int discovery(int port, int poll_ms, int uid) {
             ssize_t n = recvfrom(
                 listener,
                 buf,
-                sizeof(buf) - 1,
+				sizeof(buf),
                 0,
                 (struct sockaddr *)&src,
                 &srclen
             );
 
-            if (n > 0) {
-                buf[n] = '\0';
-				int ruid;
-				if (sscanf(buf, "FIND_ME:%d", &ruid) == 1){
-					if (ruid == uid) {
-						continue;
-					}
-                printf("got '%s' from %s:%d\n",
-                       buf,
-                       inet_ntoa(src.sin_addr),
-                       ntohs(src.sin_port));
+			if (n == DISCOVERY_PAYLOAD_SIZE) {
+				struct discovery_payload received_payload = discovery_payload_deserialize(buf);
+				if (received_payload.uid == uid) {
+					continue;
 				}
+				printf("got uid=%d host=%s port=%d from %s:%d\n",
+					   received_payload.uid,
+					   received_payload.hostname,
+					   received_payload.port,
+					   inet_ntoa(src.sin_addr),
+					   ntohs(src.sin_port));
             }
         }
-
 	}
 
 	return 0;
@@ -129,21 +133,28 @@ int get_listener_socket(int port) {
     return listener;
 }
 
-int broadcast(int port, char msg[]) {
+int broadcast(int port, const struct discovery_payload* payload) {
     int sockfd;
     struct sockaddr_in broadcast_addr;
     int broadcast_enable = 1;
+	char* msg = discovery_payload_serialize(payload);
+
+	if (msg == NULL) {
+		return 1;
+	}
 
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	
     if (sockfd < 0) {
         perror("socket");
+		free(msg);
         return 1;
     }
 
     if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast_enable, sizeof(broadcast_enable)) < 0) {
         perror("setsockopt");
 		close(sockfd);	
+		free(msg);
         return 1;
     }
 
@@ -152,10 +163,11 @@ int broadcast(int port, char msg[]) {
     broadcast_addr.sin_port = htons(port);
     broadcast_addr.sin_addr.s_addr = inet_addr("255.255.255.255");
 
-    sendto(sockfd, msg, strlen(msg), 0,
+	sendto(sockfd, msg, DISCOVERY_PAYLOAD_SIZE, 0,
            (struct sockaddr *)&broadcast_addr,
            sizeof(broadcast_addr));
 
+	free(msg);
 	close(sockfd);	
 	return 0;
 }
