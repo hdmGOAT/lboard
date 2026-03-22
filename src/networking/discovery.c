@@ -1,3 +1,5 @@
+#include "discover.h"
+
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -9,8 +11,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <poll.h>
-int get_listener_socket(int port);
-int broadcast(int port, char msg[]);
 
 int discovery(int port, int poll_ms) {
 	int listener = get_listener_socket(port);	
