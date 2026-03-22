@@ -1,5 +1,6 @@
 #include "discover.h"
-
+#include <stdlib.h>
+#include <time.h>
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -12,7 +13,12 @@
 #include <netdb.h>
 #include <poll.h>
 
-int discovery(int port, int poll_ms) {
+int uid(){
+	srand(time(NULL) ^ getpid());
+	return rand();
+}
+
+int discovery(int port, int poll_ms, int uid) {
 	int listener = get_listener_socket(port);	
 	char discov_msg[] = "CAN YOU CAN YOU CAN YOU FIND ME";
 
@@ -54,10 +60,16 @@ int discovery(int port, int poll_ms) {
 
             if (n > 0) {
                 buf[n] = '\0';
+				int ruid;
+				if (sscanf(buf, "FIND_ME:%d", &ruid) == 1){
+					if (ruid == uid) {
+						continue;
+					}
                 printf("got '%s' from %s:%d\n",
                        buf,
                        inet_ntoa(src.sin_addr),
                        ntohs(src.sin_port));
+				}
             }
         }
 
@@ -65,7 +77,6 @@ int discovery(int port, int poll_ms) {
 
 	return 0;
 }
-
 int get_listener_socket(int port) {
 	int listener;
 	int yes = 1;
@@ -124,6 +135,7 @@ int broadcast(int port, char msg[]) {
     int broadcast_enable = 1;
 
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+	
     if (sockfd < 0) {
         perror("socket");
         return 1;

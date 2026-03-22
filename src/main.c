@@ -4,6 +4,6 @@
 # define POLL_MS 2000
 
 int main(void) {
-	discovery(PORT,POLL_MS);
+	discovery(PORT,POLL_MS, uid());
 	return 0;
 }
