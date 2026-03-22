@@ -19,9 +19,9 @@ int uid(){
 }
 
 int discovery(int port, int poll_ms, int uid) {
-	int listener = get_listener_socket(port);	
-	char discov_msg[] = "CAN YOU CAN YOU CAN YOU FIND ME";
-
+	int listener = get_listener_socket(port);
+	char discov_msg[256];
+	snprintf(discov_msg, sizeof(discov_msg), "FIND_ME:%d", uid);
     char buf[1024];
     struct sockaddr_in src;
     socklen_t srclen = sizeof(src);
