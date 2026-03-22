@@ -18,11 +18,11 @@ int uid(){
 	return rand();
 }
 
-int discovery(int port, int poll_ms, int uid) {
-	int listener = get_listener_socket(port);
+int discovery(int dport, int tport,int poll_ms, int uid) {
+	int listener = get_listener_socket(dport);
 	struct discovery_payload payload = {
 		.uid = uid,
-		.port = port,
+		.port = tport,
 	};
 	memset(payload.hostname, 0, sizeof(payload.hostname));
 	if (gethostname(payload.hostname, sizeof(payload.hostname)) != 0) {
@@ -50,7 +50,7 @@ int discovery(int port, int poll_ms, int uid) {
 		}
 
 		if (ret == 0) {
-			broadcast(port, &payload);	
+			broadcast(dport, &payload);	
 			continue;
 		}
 

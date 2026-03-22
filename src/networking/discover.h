@@ -6,6 +6,6 @@
 int uid();
 int get_listener_socket(int port);
 int broadcast(int port, const struct discovery_payload* payload);
-int discovery(int port, int poll_ms, int uid);
+int discovery(int dport,int tport, int poll_ms, int uid);
 
 #endif
