@@ -1,7 +1,6 @@
 #include "discover.h"
 #include "types.h"
 #include <stdlib.h>
-#include <time.h>
 #include <asm-generic/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -14,15 +13,9 @@
 #include <netdb.h>
 #include <poll.h>
 
-int uid(){
-	srand(time(NULL) ^ getpid());
-	return rand();
-}
-
-int discovery(int dport, int tport, int poll_ms, int uid, const char node_id[NODE_ID_SIZE], on_device_fn on_device) {
+int discovery(int dport, int tport, int poll_ms, const char node_id[NODE_ID_SIZE], on_device_fn on_device) {
 	int listener = get_listener_socket(dport);
 	struct discovery_payload payload = {
-		.uid = uid,
 		.port = tport,
 	};
 	memcpy(payload.node_id, node_id, NODE_ID_SIZE);
@@ -68,7 +61,7 @@ int discovery(int dport, int tport, int poll_ms, int uid, const char node_id[NOD
 
 			if (n == DISCOVERY_PAYLOAD_SIZE) {
 				struct discovery_payload received_payload = discovery_payload_deserialize(buf);
-				if (received_payload.uid == uid) {
+				if (memcmp(received_payload.node_id, node_id, NODE_ID_SIZE) == 0) {
 					continue;
 				}
 

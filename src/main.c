@@ -22,6 +22,6 @@ int main(void) {
 		return 1;
 	}
 	
-	discovery(PORT, TCP_PORT, POLL_MS, uid(), node_id, print_disc);
+	discovery(PORT, TCP_PORT, POLL_MS, node_id, print_disc);
 	return 0;
 }
