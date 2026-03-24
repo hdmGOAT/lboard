@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <netinet/in.h>
 
 enum { DISCOVERY_HOSTNAME_SIZE = 64 };
 enum { NODE_ID_SIZE = 32 };
@@ -17,5 +18,10 @@ enum { DISCOVERY_PAYLOAD_SIZE = sizeof(int32_t) * 2 + NODE_ID_SIZE + DISCOVERY_H
 
 char* discovery_payload_serialize(const struct discovery_payload* payload);
 struct discovery_payload discovery_payload_deserialize(const char* buf);
+
+typedef void (*on_device_fn)(
+	const struct discovery_payload* payload,
+	const struct sockaddr_in* addr
+) ;
 
 #endif

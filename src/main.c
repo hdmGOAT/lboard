@@ -1,10 +1,19 @@
 #include "networking/discover.h"
+#include "networking/types.h"
 #include "store/node.h"
+#include <arpa/inet.h>
 #include <stdio.h>
 
 # define PORT 5125
 # define POLL_MS 2000
 # define TCP_PORT 1226
+
+void print_disc( 
+	const struct discovery_payload* payload,
+	const struct sockaddr_in* addr
+){
+	printf("Found %s offering port %d, at %s", payload->hostname, payload->port, inet_ntoa(addr->sin_addr));
+}
 
 int main(void) {
 	char node_id[NODE_ID_BYTES];
@@ -12,7 +21,7 @@ int main(void) {
 		fprintf(stderr, "failed to load/create node_id\n");
 		return 1;
 	}
-
-	discovery(PORT,TCP_PORT,POLL_MS, uid());
+	
+	discovery(PORT, TCP_PORT, POLL_MS, uid(), node_id, print_disc);
 	return 0;
 }

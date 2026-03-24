@@ -1,4 +1,5 @@
 #include "discover.h"
+#include "types.h"
 #include <stdlib.h>
 #include <time.h>
 #include <asm-generic/socket.h>
@@ -18,12 +19,13 @@ int uid(){
 	return rand();
 }
 
-int discovery(int dport, int tport,int poll_ms, int uid) {
+int discovery(int dport, int tport, int poll_ms, int uid, const char node_id[NODE_ID_SIZE], on_device_fn on_device) {
 	int listener = get_listener_socket(dport);
 	struct discovery_payload payload = {
 		.uid = uid,
 		.port = tport,
 	};
+	memcpy(payload.node_id, node_id, NODE_ID_SIZE);
 	memset(payload.hostname, 0, sizeof(payload.hostname));
 	if (gethostname(payload.hostname, sizeof(payload.hostname)) != 0) {
 		snprintf(payload.hostname, sizeof(payload.hostname), "unknown");
@@ -69,12 +71,8 @@ int discovery(int dport, int tport,int poll_ms, int uid) {
 				if (received_payload.uid == uid) {
 					continue;
 				}
-				printf("got uid=%d host=%s port=%d from %s:%d\n",
-					   received_payload.uid,
-					   received_payload.hostname,
-					   received_payload.port,
-					   inet_ntoa(src.sin_addr),
-					   ntohs(src.sin_port));
+
+				on_device(&received_payload, &src);
             }
         }
 	}
