@@ -12,7 +12,8 @@ void print_disc(
 	const struct discovery_payload* payload,
 	const struct sockaddr_in* addr
 ){
-	printf("Found %s offering port %d, at %s", payload->hostname, payload->port, inet_ntoa(addr->sin_addr));
+	printf("Found %s offering port %d, at %s\n", payload->hostname, payload->port, inet_ntoa(addr->sin_addr));
+	fflush(stdout);
 }
 
 int main(void) {
@@ -21,6 +22,9 @@ int main(void) {
 		fprintf(stderr, "failed to load/create node_id\n");
 		return 1;
 	}
+
+	printf("Discovery listening on UDP %d and broadcasting every %d ms\n", PORT, POLL_MS);
+	fflush(stdout);
 	
 	discovery(PORT, TCP_PORT, POLL_MS, node_id, print_disc);
 	return 0;
