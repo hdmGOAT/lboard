@@ -1,23 +1,37 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2
+CPPFLAGS = -MMD -MP
 
 OUT = out
 BIN = $(OUT)/lboard
-SRC = src/main.c src/networking/discovery.c src/networking/types.c src/store/node.c
+OBJDIR = $(OUT)/obj
 
-build: $(OUT) $(BIN)
+SRC = $(shell find src -name '*.c')
+OBJ = $(patsubst src/%.c,$(OBJDIR)/%.o,$(SRC))
+DEP = $(OBJ:.o=.d)
 
-$(BIN): $(SRC)
-	@echo "Building lboard"
-	$(CC) $(CFLAGS) -o $(BIN) $(SRC)
+.PHONY: build clean help
+
+build: $(BIN)
+
+$(BIN): $(OBJ) | $(OUT)
+	@echo "Linking lboard"
+	$(CC) $(CFLAGS) -o $@ $(OBJ)
+
+$(OBJDIR)/%.o: src/%.c
+	@mkdir -p $(dir $@)
+	@echo "Compiling $<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(OUT):
 	mkdir -p $(OUT)
 
 clean:
-	rm -f $(BIN)
+	rm -rf $(OUT)
 
 help:
 	@echo "Targets:"
-	@echo "  build  - build the lboard binary"
-	@echo "  clean  - remove build output"
+	@echo "  build  - compile and link the lboard binary"
+	@echo "  clean  - remove all build output"
+
+-include $(DEP)
