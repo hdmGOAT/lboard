@@ -23,6 +23,13 @@ struct device_node {
 	struct list_head lru;
 	uint64_t last_seen;
 };
+
+struct device_table {
+	struct list_head lru;
+	size_t count;
+	uint64_t ttl_ms;
+};
+
 enum { DISCOVERY_PAYLOAD_SIZE = sizeof(int32_t) + NODE_ID_SIZE + DISCOVERY_HOSTNAME_SIZE };
 
 char* discovery_payload_serialize(const struct discovery_payload* payload);
