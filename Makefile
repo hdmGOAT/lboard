@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2
-CPPFLAGS = -MMD -MP -Isrc
+CPPFLAGS = -MMD -MP -Isrc -D_POSIX_C_SOURCE=200809L -D_DEFAULT_SOURCE
 
 OUT = out
 BIN = $(OUT)/lboard
