@@ -50,6 +50,8 @@ static void discovery_on_device(
 
     (void)addr;
 
+    device_table_expire_devices(discovery_ctx->table, discovery_ctx->device_map);
+
     device = hashmap_get(discovery_ctx->device_map, payload->node_id);
     if (device != NULL) {
         device_table_touch(discovery_ctx->table, device, payload);

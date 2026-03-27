@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 #include "ds/list/list.h"
 
@@ -28,6 +29,7 @@ struct device_table {
 	struct list_head lru;
 	size_t count;
 	uint64_t ttl_ms;
+	pthread_mutex_t mutex;
 };
 
 enum { DISCOVERY_PAYLOAD_SIZE = sizeof(int32_t) + NODE_ID_SIZE + DISCOVERY_HOSTNAME_SIZE };
