@@ -4,6 +4,7 @@
 #include "discovery/discovery_worker.h"
 #include "store/node.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -13,6 +14,33 @@ enum {
 };
 
 #define TTL_MS (60 * 60 * 0.5)
+
+static volatile sig_atomic_t shutdown_requested = 0;
+
+static void on_shutdown_signal(int signum) {
+    (void)signum;
+    shutdown_requested = 1;
+}
+
+static int install_signal_handlers(void) {
+    struct sigaction action;
+
+    action.sa_handler = on_shutdown_signal;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+
+    if (sigaction(SIGINT, &action, NULL) != 0) {
+        perror("sigaction SIGINT");
+        return -1;
+    }
+
+    if (sigaction(SIGTERM, &action, NULL) != 0) {
+        perror("sigaction SIGTERM");
+        return -1;
+    }
+
+    return 0;
+}
 
 int lboard_run(void) {
     char node_id[NODE_ID_BYTES];
@@ -24,6 +52,11 @@ int lboard_run(void) {
     struct device_table table;
     device_table_init(&table, TTL_MS);
 
+    if (install_signal_handlers() != 0) {
+        device_table_destroy(&table);
+        return 1;
+    }
+
     printf("Discovery listening on UDP %d and broadcasting every %d ms\n", PORT, POLL_MS);
     fflush(stdout);
 
@@ -32,9 +65,17 @@ int lboard_run(void) {
         return 1;
     }
 
-    while (1) {
+    while (!shutdown_requested) {
         device_table_expire_devices(&table);
         device_table_print(&table);
         sleep(5);
     }
+
+    if (stop_discovery_worker() != 0) {
+        device_table_destroy(&table);
+        return 1;
+    }
+
+    device_table_destroy(&table);
+    return 0;
 }

@@ -12,8 +12,14 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <poll.h>
+#include <errno.h>
 
-int discovery(int dport, int tport, int poll_ms, const char node_id[NODE_ID_SIZE], on_device_fn on_device, void *ctx) {
+int discovery(int dport, int tport, int poll_ms,
+			  const char node_id[NODE_ID_SIZE],
+			  on_device_fn on_device,
+			  void *ctx,
+			  should_stop_fn should_stop,
+			  void *stop_ctx) {
 	int listener = get_listener_socket(dport);
 	struct discovery_payload payload = {
 		.port = tport,
@@ -36,11 +42,19 @@ int discovery(int dport, int tport, int poll_ms, const char node_id[NODE_ID_SIZE
 	pfds[0].fd =listener;
 	pfds[0].events = POLLIN;
 
-	while (1) {
+	while (should_stop == NULL || should_stop(stop_ctx) == 0) {
 		int ret = poll(pfds, 1, poll_ms);
 
 		if (ret < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+
 			perror("poll");
+			break;
+		}
+
+		if (should_stop != NULL && should_stop(stop_ctx) != 0) {
 			break;
 		}
 
@@ -69,6 +83,8 @@ int discovery(int dport, int tport, int poll_ms, const char node_id[NODE_ID_SIZE
             }
         }
 	}
+
+	close(listener);
 
 	return 0;
 }
