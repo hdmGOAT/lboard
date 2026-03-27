@@ -28,10 +28,12 @@ int lboard_run(void) {
     fflush(stdout);
 
     if (start_discovery_worker(node_id, &table) != 0) {
+        device_table_destroy(&table);
         return 1;
     }
 
     while (1) {
+        device_table_expire_devices(&table);
         device_table_print(&table);
         sleep(5);
     }

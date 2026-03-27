@@ -8,6 +8,8 @@
 
 #include "ds/list/list.h"
 
+struct hashmap;
+
 enum { DISCOVERY_HOSTNAME_SIZE = 64 };
 enum { NODE_ID_SIZE = 32 };
 
@@ -30,6 +32,7 @@ struct device_table {
 	size_t count;
 	uint64_t ttl_ms;
 	pthread_mutex_t mutex;
+	struct hashmap *device_map;
 };
 
 enum { DISCOVERY_PAYLOAD_SIZE = sizeof(int32_t) + NODE_ID_SIZE + DISCOVERY_HOSTNAME_SIZE };

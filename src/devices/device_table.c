@@ -12,6 +12,25 @@
 
 static size_t rendered_lines = 0;
 
+static size_t node_id_hash(const void *key, void *ctx) {
+    const unsigned char *bytes = key;
+    size_t hash = 1469598103934665603ull;
+    size_t index;
+    (void)ctx;
+
+    for (index = 0; index < NODE_ID_SIZE; ++index) {
+        hash ^= (size_t)bytes[index];
+        hash *= 1099511628211ull;
+    }
+
+    return hash;
+}
+
+static int node_id_equal(const void *left_key, const void *right_key, void *ctx) {
+    (void)ctx;
+    return memcmp(left_key, right_key, NODE_ID_SIZE) == 0;
+}
+
 void device_table_init(struct device_table *table, uint64_t ttl_ms) {
     int status;
 
@@ -25,6 +44,42 @@ void device_table_init(struct device_table *table, uint64_t ttl_ms) {
         fprintf(stderr, "pthread_mutex_init failed\n");
         abort();
     }
+
+    table->device_map = hashmap_new(node_id_hash, node_id_equal, NULL);
+    if (table->device_map == NULL) {
+        fprintf(stderr, "hashmap_new failed\n");
+        abort();
+    }
+}
+
+void device_table_destroy(struct device_table *table) {
+    struct list_head *pos;
+
+    if (table == NULL) {
+        return;
+    }
+
+    pthread_mutex_lock(&table->mutex);
+    pos = table->lru.next;
+
+    while (pos != &table->lru) {
+        struct list_head *next = pos->next;
+        struct device_node *dev = container_of(pos, struct device_node, lru);
+
+        list_del(&dev->lru);
+        free(dev);
+        pos = next;
+    }
+
+    table->count = 0;
+
+    if (table->device_map != NULL) {
+        hashmap_free(table->device_map);
+        table->device_map = NULL;
+    }
+
+    pthread_mutex_unlock(&table->mutex);
+    pthread_mutex_destroy(&table->mutex);
 }
 
 struct device_node *device_table_add(struct device_table *table,
@@ -43,10 +98,62 @@ struct device_node *device_table_add(struct device_table *table,
 
     pthread_mutex_lock(&table->mutex);
     list_add(&dev->lru, &table->lru);
+    if (hashmap_insert(table->device_map, dev->payload.node_id, dev) != 0) {
+        list_del(&dev->lru);
+        pthread_mutex_unlock(&table->mutex);
+        free(dev);
+        perror("hashmap_insert failed");
+        return NULL;
+    }
     table->count++;
     pthread_mutex_unlock(&table->mutex);
 
     return dev;
+}
+
+int device_table_upsert(struct device_table *table,
+                        const struct discovery_payload *payload) {
+    struct device_node *device;
+
+    if (table == NULL || payload == NULL) {
+        return -1;
+    }
+
+    pthread_mutex_lock(&table->mutex);
+
+    device = hashmap_get(table->device_map, payload->node_id);
+    if (device != NULL) {
+        memcpy(&device->payload, payload, sizeof(*payload));
+        device->last_seen = now_ms();
+        list_del(&device->lru);
+        list_add(&device->lru, &table->lru);
+        pthread_mutex_unlock(&table->mutex);
+        return 0;
+    }
+
+    device = malloc(sizeof(*device));
+    if (device == NULL) {
+        pthread_mutex_unlock(&table->mutex);
+        perror("malloc failed");
+        return -1;
+    }
+
+    memcpy(&device->payload, payload, sizeof(*payload));
+    device->last_seen = now_ms();
+    INIT_LIST_HEAD(&device->lru);
+    list_add(&device->lru, &table->lru);
+
+    if (hashmap_insert(table->device_map, device->payload.node_id, device) != 0) {
+        list_del(&device->lru);
+        pthread_mutex_unlock(&table->mutex);
+        free(device);
+        perror("hashmap_insert failed");
+        return -1;
+    }
+
+    table->count++;
+    pthread_mutex_unlock(&table->mutex);
+    return 0;
 }
 
 void device_table_touch(struct device_table *table,
@@ -109,12 +216,11 @@ void device_table_print(struct device_table *table) {
     pthread_mutex_unlock(&table->mutex);
 }
 
-void device_table_expire_devices(struct device_table *table,
-                                 struct hashmap *device_map) {
+void device_table_expire_devices(struct device_table *table) {
     struct list_head *pos;
     uint64_t now;
 
-    if (table == NULL || device_map == NULL) {
+    if (table == NULL || table->device_map == NULL) {
         return;
     }
 
@@ -131,7 +237,7 @@ void device_table_expire_devices(struct device_table *table,
         }
 
         list_del(&dev->lru);
-        (void)hashmap_remove(device_map, dev->payload.node_id);
+        (void)hashmap_remove(table->device_map, dev->payload.node_id);
         free(dev);
 
         if (table->count > 0) {
