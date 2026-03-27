@@ -13,7 +13,7 @@
 #include <netdb.h>
 #include <poll.h>
 
-int discovery(int dport, int tport, int poll_ms, const char node_id[NODE_ID_SIZE], on_device_fn on_device) {
+int discovery(int dport, int tport, int poll_ms, const char node_id[NODE_ID_SIZE], on_device_fn on_device, void *ctx) {
 	int listener = get_listener_socket(dport);
 	struct discovery_payload payload = {
 		.port = tport,
@@ -65,7 +65,7 @@ int discovery(int dport, int tport, int poll_ms, const char node_id[NODE_ID_SIZE
 					continue;
 				}
 
-				on_device(&received_payload, &src);
+				on_device(&received_payload, &src, ctx);
             }
         }
 	}

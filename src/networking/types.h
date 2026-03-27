@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <netinet/in.h>
 
-#include "../ds/list/linkedlist.h"
+#include "../ds/list/list.h"
 
 enum { DISCOVERY_HOSTNAME_SIZE = 64 };
 enum { NODE_ID_SIZE = 32 };
@@ -37,7 +37,8 @@ struct discovery_payload discovery_payload_deserialize(const char* buf);
 
 typedef void (*on_device_fn)(
 	const struct discovery_payload* payload,
-	const struct sockaddr_in* addr
+	const struct sockaddr_in* addr,
+	void *ctx
 ) ;
 
 

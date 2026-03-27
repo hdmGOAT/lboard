@@ -3,18 +3,27 @@
 #include "store/node.h"
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 # define PORT 5125
 # define POLL_MS 2000
 # define TCP_PORT 1226
 # define TTL_MS 60 * 60
-void process_discovered( 
-	const struct discovery_payload* payload,
-	const struct sockaddr_in* addr
+void process_discovered(
+    const struct discovery_payload* payload,
+    const struct sockaddr_in* addr,
+    void *ctx
 ){
-	
-}
+    struct device_table *table = ctx;    
 
+    struct device_node *dev = malloc(sizeof(*dev));
+    if (!dev) {
+        perror("malloc failed");
+        return;
+    }
+	
+
+}
 int main(void) {
 	char node_id[NODE_ID_BYTES];
 	if (load_or_create_node_id(node_id) != 0) {
@@ -31,6 +40,6 @@ int main(void) {
 	printf("Discovery listening on UDP %d and broadcasting every %d ms\n", PORT, POLL_MS);
 	fflush(stdout);
 	
-	discovery(PORT, TCP_PORT, POLL_MS, node_id, process_discovered);
+	discovery(PORT, TCP_PORT, POLL_MS, node_id, process_discovered, &table);
 	return 0;
 }
