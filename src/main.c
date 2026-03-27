@@ -16,7 +16,7 @@
 # define PORT 5125
 # define POLL_MS 2000
 # define TCP_PORT 1226
-# define TTL_MS 60 * 60 * 5
+# define TTL_MS 60 * 60 * 0.5
 
 uint64_t now_ms(void) {
     struct timeval tv;

@@ -10,9 +10,13 @@ SRC = $(shell find src -name '*.c')
 OBJ = $(patsubst src/%.c,$(OBJDIR)/%.o,$(SRC))
 DEP = $(OBJ:.o=.d)
 
-.PHONY: build clean help
+.PHONY: build run clean help
 
 build: $(BIN)
+
+run: $(BIN)
+	@echo "Running lboard"
+	@$(BIN)
 
 $(BIN): $(OBJ) | $(OUT)
 	@echo "Linking lboard"
@@ -32,6 +36,7 @@ clean:
 help:
 	@echo "Targets:"
 	@echo "  build  - compile and link the lboard binary"
+	@echo "  run    - build (if needed) and run lboard"
 	@echo "  clean  - remove all build output"
 
 -include $(DEP)
