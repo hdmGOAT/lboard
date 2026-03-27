@@ -63,6 +63,7 @@ void device_table_print(const struct device_table *table) {
     printf("Current devices:\n");
     for (pos = table->lru.next; pos != &table->lru; pos = pos->next) {
         const struct device_node *dev = container_of(pos, struct device_node, lru);
+		printf("%s \n", dev->payload.hostname);
         printf(" - last_seen %llu ms ago\n", (unsigned long long)(now_ms() - dev->last_seen));
     }
 }
