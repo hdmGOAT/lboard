@@ -32,7 +32,7 @@ int lboard_run(void) {
     }
 
     while (1) {
-        sleep(5);
         device_table_print(&table);
+        sleep(5);
     }
 }
