@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2
-CPPFLAGS = -MMD -MP
+CPPFLAGS = -MMD -MP -Isrc
 
 OUT = out
 BIN = $(OUT)/lboard

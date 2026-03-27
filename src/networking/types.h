@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <netinet/in.h>
 
-#include "../ds/list/list.h"
+#include "ds/list/list.h"
 
 enum { DISCOVERY_HOSTNAME_SIZE = 64 };
 enum { NODE_ID_SIZE = 32 };
