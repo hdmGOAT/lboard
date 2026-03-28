@@ -7,6 +7,55 @@
 #include <unistd.h>
 
 #include "stream.h"
+
+int connect_tcp_socket(const char *ip, int port)
+{
+	struct addrinfo hints, *res, *p;
+	int sockfd = -1;
+	char port_str[6];
+	int gai_status;
+
+	if (ip == NULL) {
+		fprintf(stderr, "ip is NULL\n");
+		return -1;
+	}
+
+	snprintf(port_str, sizeof(port_str), "%d", port);
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	gai_status = getaddrinfo(ip, port_str, &hints, &res);
+	if (gai_status != 0) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gai_status));
+		return -1;
+	}
+
+	for (p = res; p != NULL; p = p->ai_next) {
+		sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+		if (sockfd < 0) {
+			continue;
+		}
+
+		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == 0) {
+			break;
+		}
+
+		close(sockfd);
+		sockfd = -1;
+	}
+
+	freeaddrinfo(res);
+
+	if (p == NULL) {
+		perror("connect");
+		return -1;
+	}
+
+	return sockfd;
+}
+
 int get_tcp_listener(int port, int backlog) {
 	struct addrinfo hints, *res, *p;
 	int sockfd = -1;
