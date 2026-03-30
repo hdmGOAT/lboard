@@ -46,6 +46,8 @@ typedef void (*on_device_fn)(
 	void *ctx
 ) ;
 
-
+typedef int (*on_client_payload)(
+	int client_fd, const char *buf, size_t len	
+);
 
 #endif

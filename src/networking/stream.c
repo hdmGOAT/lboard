@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "stream.h"
+#include "networking/types.h"
 
 int connect_tcp_socket(const char *ip, int port)
 {
@@ -133,15 +134,8 @@ void del_from_pfds(struct pollfd pfds[], int i, int *fd_count)
     (*fd_count)--;
 }
 
-int handle_client_payload(int client_fd, const char *buf, size_t len)
-{
-	(void)client_fd;
-	(void)buf;
-	(void)len;
-	return 0;
-}
 
-int process_connections(struct pollfd **pfds, int *fd_count, int *fd_size, int listener)
+int process_connections(struct pollfd **pfds, int *fd_count, int *fd_size, int listener, on_client_payload handle_payload)
 {
 	int i;
 	for (i = 0; i < *fd_count; i++) {
@@ -175,7 +169,7 @@ int process_connections(struct pollfd **pfds, int *fd_count, int *fd_size, int l
 			continue;
 		}
 
-		if (handle_client_payload((*pfds)[i].fd, buf, (size_t)nbytes) != 0) {
+		if (handle_payload((*pfds)[i].fd, buf, (size_t)nbytes) != 0) {
 			close((*pfds)[i].fd);
 			del_from_pfds(*pfds, i, fd_count);
 			i--;
@@ -185,7 +179,7 @@ int process_connections(struct pollfd **pfds, int *fd_count, int *fd_size, int l
 	return 0;
 }
 
-int poll_tcp(int port, int backlog, int fdsize){
+int poll_tcp(int port, int backlog, int fdsize, on_client_payload handle_payload){
 	int listener = get_tcp_listener(port, backlog);
 	if (listener < 0) {
 		perror("error setting up listener");
@@ -218,7 +212,7 @@ int poll_tcp(int port, int backlog, int fdsize){
 			continue;
 		}
 
-		if (process_connections(&pfds, &fd_count, &fdsize, listener) != 0) {
+		if (process_connections(&pfds, &fd_count, &fdsize, listener, handle_payload) != 0) {
 			free(pfds);
 			close(listener);
 			return -1;
