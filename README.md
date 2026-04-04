@@ -1,3 +1,5 @@
 # lboard
 
-simple c based clipboard that syncs over lan
+`lboard` is a C-based clipboard synchronization tool for local area networks.
+
+This project is currently under active development.
