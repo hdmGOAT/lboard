@@ -4,8 +4,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 #include "ds/list/list.h"
+
+struct hashmap;
 
 enum { DISCOVERY_HOSTNAME_SIZE = 64 };
 enum { NODE_ID_SIZE = 32 };
@@ -28,6 +31,8 @@ struct device_table {
 	struct list_head lru;
 	size_t count;
 	uint64_t ttl_ms;
+	pthread_mutex_t mutex;
+	struct hashmap *device_map;
 };
 
 enum { DISCOVERY_PAYLOAD_SIZE = sizeof(int32_t) + NODE_ID_SIZE + DISCOVERY_HOSTNAME_SIZE };
@@ -41,6 +46,8 @@ typedef void (*on_device_fn)(
 	void *ctx
 ) ;
 
-
+typedef int (*on_client_payload)(
+	int client_fd, const char *buf, size_t len	
+);
 
 #endif
