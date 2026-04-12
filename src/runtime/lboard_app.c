@@ -79,3 +79,10 @@ int lboard_run(void) {
     device_table_destroy(&table);
     return 0;
 }
+
+int confirm_request(const char *message) {
+    char response;
+    printf("%s (y/n): ", message);
+    scanf(" %c", &response);
+    return response == 'y' || response == 'Y';
+}

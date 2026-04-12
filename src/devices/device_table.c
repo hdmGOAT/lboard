@@ -248,3 +248,37 @@ void device_table_expire_devices(struct device_table *table) {
     }
     pthread_mutex_unlock(&table->mutex);
 }
+
+struct device_node *device_table_select(struct device_table *table) {
+    pthread_mutex_lock(&table->mutex);
+
+    printf("Available devices:\n");
+    struct list_head *pos = table->lru.next;
+    int index = 0;
+    int selection = -1;
+
+    while (pos != &table->lru) {
+        struct device_node *dev = container_of(pos, struct device_node, lru);
+        printf("%d: %s\n", index, dev->payload.hostname); // Assuming hostname is part of payload
+        pos = pos->next;
+        index++;
+    }
+
+    printf("Select a device by index: ");
+    scanf("%d", &selection);
+
+    index = 0;
+    pos = table->lru.next;
+    while (pos != &table->lru) {
+        if (index == selection) {
+            pthread_mutex_unlock(&table->mutex);
+            return container_of(pos, struct device_node, lru);
+        }
+        pos = pos->next;
+        index++;
+    }
+
+    pthread_mutex_unlock(&table->mutex);
+    printf("Invalid selection.\n");
+    return NULL;
+}
